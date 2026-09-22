@@ -1,15 +1,18 @@
 PYTHON ?= python3
 
-.PHONY: run test lint clean
+.PHONY: run vfs test lint clean
 
-run:
-	$(PYTHON) src/main.py
+run: vfs
+	$(PYTHON) src/main.py --vfs build/vfs/deep.zip
+
+vfs:
+	$(PYTHON) tools/make_vfs.py
 
 test:
 	$(PYTHON) -m pytest -v
 
 lint:
-	$(PYTHON) -m flake8 --max-line-length=80 src tests
+	$(PYTHON) -m flake8 src tests tools
 
 clean:
 	rm -rf build .pytest_cache

@@ -3,6 +3,7 @@
 from emulator import system
 from emulator.commands import REGISTRY, CommandError
 from emulator.parser import ParseError, parse
+from emulator.vfs import VFS, VFSError
 
 SHELL_NAME = "emu"
 OUT = "out"
@@ -28,6 +29,7 @@ class Shell:
         self.output = output or _print_output
         self.user = system.get_username()
         self.host = system.get_hostname()
+        self.vfs = VFS()
         self.cwd = "/"
         self.running = True
         self.exit_code = 0
@@ -89,8 +91,30 @@ class Shell:
         """Выполнить действия при запуске согласно настройкам ``config``."""
         for line in config.describe():
             self.debug(line)
+        if config.vfs_path:
+            self.load_vfs(config.vfs_path)
+        self.show_motd()
         if config.script_path:
             self.run_script(config.script_path)
+
+    def load_vfs(self, path):
+        """Загрузить VFS из ZIP-архива; при ошибке оставить пустую."""
+        try:
+            self.vfs = VFS.from_zip(path)
+        except VFSError as exc:
+            self.error(f"{SHELL_NAME}: ошибка загрузки VFS: {exc}")
+            return False
+        self.cwd = "/"
+        dirs, files = self.vfs.stats()
+        self.debug(f"[debug] VFS загружена из {path}: "
+                   f"каталогов {dirs}, файлов {files}")
+        return True
+
+    def show_motd(self):
+        """Вывести сообщение дня из файла /motd, если он есть."""
+        text = self.vfs.motd()
+        if text is not None:
+            self.write(text.rstrip("\n"))
 
     def run_script(self, path):
         """Выполнить стартовый скрипт, показывая ввод и вывод.
