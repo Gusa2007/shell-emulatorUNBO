@@ -7,12 +7,15 @@ r"""Разбор командной строки на слова с учётом
 * внутри двойных кавычек обратная косая черта экранирует
   символы ``"`` и ``\``;
 * вне кавычек обратная косая черта экранирует следующий символ;
-* соседние части слова склеиваются: ``a"b c"d`` -> ``ab cd``.
+* соседние части слова склеиваются: ``a"b c"d`` -> ``ab cd``;
+* символ ``#`` в начале слова (вне кавычек) начинает комментарий
+  до конца строки -- как в Python.
 """
 
 SINGLE_QUOTE = "'"
 DOUBLE_QUOTE = '"'
 BACKSLASH = "\\"
+COMMENT = "#"
 ESCAPABLE_IN_DOUBLE = (DOUBLE_QUOTE, BACKSLASH)
 
 
@@ -50,6 +53,8 @@ class _Tokenizer:
             self._read_double_quoted()
         elif char == BACKSLASH:
             self._append(self._take_escaped())
+        elif char == COMMENT and not self.in_word:
+            self.pos = len(self.line)
         else:
             self._append(char)
 

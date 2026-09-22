@@ -8,6 +8,7 @@ SHELL_NAME = "emu"
 OUT = "out"
 ERR = "err"
 ECHO = "echo"
+DEBUG = "debug"
 
 
 def _print_output(text, kind):
@@ -48,6 +49,10 @@ class Shell:
         """Вывести сообщение об ошибке."""
         self.output(text, ERR)
 
+    def debug(self, text):
+        """Вывести отладочное сообщение."""
+        self.output(text, DEBUG)
+
     def stop(self, code):
         """Завершить сеанс с кодом ``code``."""
         self.running = False
@@ -79,3 +84,41 @@ class Shell:
             self.error(f"{name}: {exc}")
             return False
         return True
+
+    def start(self, config):
+        """Выполнить действия при запуске согласно настройкам ``config``."""
+        for line in config.describe():
+            self.debug(line)
+        if config.script_path:
+            self.run_script(config.script_path)
+
+    def run_script(self, path):
+        """Выполнить стартовый скрипт, показывая ввод и вывод.
+
+        Выполнение продолжается после ошибок; в конце выводится
+        число строк с ошибками. Возвращает ``True``, если ошибок нет.
+        """
+        try:
+            with open(path, encoding="utf-8") as file:
+                lines = file.read().splitlines()
+        except (OSError, UnicodeDecodeError) as exc:
+            self.error(f"{SHELL_NAME}: {path}: не удалось прочитать "
+                       f"скрипт: {exc}")
+            return False
+        failed = self._run_lines(lines)
+        self.debug(f"[debug] скрипт {path} выполнен, "
+                   f"строк с ошибками: {len(failed)}")
+        return not failed
+
+    def _run_lines(self, lines):
+        """Выполнить строки скрипта и вернуть номера строк с ошибками."""
+        failed = []
+        for number, line in enumerate(lines, start=1):
+            if not self.running:
+                break
+            if not line.strip():
+                continue
+            self.output(self.prompt() + line, ECHO)
+            if not self.execute(line):
+                failed.append(number)
+        return failed

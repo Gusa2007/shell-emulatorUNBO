@@ -3,13 +3,15 @@
 import tkinter as tk
 from tkinter import scrolledtext
 
-from emulator.shell import ERR, ECHO
+from emulator.shell import DEBUG, ECHO, ERR
 
 FONT = ("Courier New", 11)
 BACKGROUND = "#1e1e1e"
 FOREGROUND = "#d4d4d4"
 ERROR_COLOR = "#f48771"
 PROMPT_COLOR = "#6a9955"
+DEBUG_COLOR = "#808080"
+START_DELAY_MS = 100
 CLOSE_DELAY_MS = 300
 
 
@@ -36,6 +38,7 @@ class EmulatorApp:
         self.text.pack(fill=tk.BOTH, expand=True)
         self.text.tag_config(ERR, foreground=ERROR_COLOR)
         self.text.tag_config(ECHO, foreground=PROMPT_COLOR)
+        self.text.tag_config(DEBUG, foreground=DEBUG_COLOR)
 
     def _build_input(self):
         """Создать строку ввода с приглашением."""
@@ -61,10 +64,23 @@ class EmulatorApp:
         self.text.configure(state=tk.DISABLED)
         self.text.see(tk.END)
 
+    def start(self, config):
+        """Запланировать стартовые действия после открытия окна."""
+        self.root.after(START_DELAY_MS, self._start_now, config)
+
+    def _start_now(self, config):
+        """Выполнить стартовые действия оболочки."""
+        self.shell.start(config)
+        self._refresh()
+
     def submit(self, line):
         """Показать введённую строку и выполнить её."""
         self.write(self.shell.prompt() + line, ECHO)
         self.shell.execute(line)
+        self._refresh()
+
+    def _refresh(self):
+        """Обновить приглашение и закрыть окно после exit."""
         self.prompt_label.configure(text=self.shell.prompt())
         if not self.shell.running:
             self.entry.configure(state=tk.DISABLED)
