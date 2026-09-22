@@ -25,7 +25,6 @@ class EmulatorApp:
         self.root.title(shell.title)
         self.root.geometry("820x520")
         shell.output = self.write
-        self.input_history = []
         self.history_pos = 0
         self._build_output()
         self._build_input()
@@ -71,6 +70,7 @@ class EmulatorApp:
     def _start_now(self, config):
         """Выполнить стартовые действия оболочки."""
         self.shell.start(config)
+        self.history_pos = len(self.shell.history)
         self._refresh()
 
     def submit(self, line):
@@ -90,20 +90,17 @@ class EmulatorApp:
         """Обработать нажатие Enter в строке ввода."""
         line = self.entry.get()
         self.entry.delete(0, tk.END)
-        if line.strip():
-            self.input_history.append(line)
-        self.history_pos = len(self.input_history)
         self.submit(line)
+        self.history_pos = len(self.shell.history)
 
     def _browse(self, step):
-        """Листать ранее введённые команды стрелками."""
-        if not self.input_history:
-            return
-        last = len(self.input_history)
+        """Листать историю команд стрелками вверх и вниз."""
+        history = self.shell.history
+        last = len(history)
         self.history_pos = max(0, min(last, self.history_pos + step))
         self.entry.delete(0, tk.END)
         if self.history_pos < last:
-            self.entry.insert(0, self.input_history[self.history_pos])
+            self.entry.insert(0, history[self.history_pos])
 
     def run(self):
         """Запустить главный цикл обработки событий."""

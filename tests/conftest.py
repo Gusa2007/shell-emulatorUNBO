@@ -1,5 +1,7 @@
 """Общие фикстуры тестов."""
 
+import zipfile
+
 import pytest
 
 from emulator.shell import Shell
@@ -31,3 +33,32 @@ def recorder():
 def shell(recorder):
     """Оболочка, пишущая вывод в журнал."""
     return Shell(output=recorder)
+
+
+TREE = {
+    "motd": "Добро пожаловать!\n",
+    "home/user/docs/reports/q1.txt": "отчёт",
+    "home/user/docs/empty/": "",
+    "home/user/My Documents/letter.txt": "письмо",
+    "home/user/.profile": "PATH=/bin",
+    "etc/hosts": "127.0.0.1 localhost",
+    "tmp/": "",
+}
+
+
+@pytest.fixture
+def vfs_zip(tmp_path):
+    """ZIP-архив с тестовым деревом VFS."""
+    path = tmp_path / "vfs.zip"
+    with zipfile.ZipFile(path, "w") as archive:
+        for name, data in TREE.items():
+            archive.writestr(name, data)
+    return str(path)
+
+
+@pytest.fixture
+def vfs_shell(shell, recorder, vfs_zip):
+    """Оболочка с загруженной VFS и очищенным журналом вывода."""
+    shell.load_vfs(vfs_zip)
+    recorder.lines.clear()
+    return shell

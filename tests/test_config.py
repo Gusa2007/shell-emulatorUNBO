@@ -45,29 +45,29 @@ def test_hash_inside_word_or_quotes_is_kept():
 def test_script_echoes_input_and_output(shell, recorder, tmp_path):
     """Скрипт показывает приглашение с командой и её вывод."""
     script = tmp_path / "s.emu"
-    script.write_text("# комментарий\n\ncd /x  # переход\n",
+    script.write_text("# комментарий\n\nwho -q  # кто в системе\n",
                       encoding="utf-8")
     assert shell.run_script(str(script))
     assert ("echo", shell.prompt() + "# комментарий") in recorder.lines
-    assert ("out", "cd: аргументы ['/x']") in recorder.lines
+    assert ("out", shell.user) in recorder.lines
 
 
 def test_script_continues_after_error(shell, recorder, tmp_path):
     """После ошибки выполнение скрипта продолжается."""
     script = tmp_path / "s.emu"
-    script.write_text("foo\ncd /y\n", encoding="utf-8")
+    script.write_text("foo\nwho -q\n", encoding="utf-8")
     assert not shell.run_script(str(script))
     assert "команда не найдена" in recorder.text("err")
-    assert "cd: аргументы ['/y']" in recorder.text("out")
+    assert "пользователей=1" in recorder.text("out")
     assert "строк с ошибками: 1" in recorder.text("debug")
 
 
 def test_script_stops_on_exit(shell, recorder, tmp_path):
     """Команда exit в скрипте прекращает его выполнение."""
     script = tmp_path / "s.emu"
-    script.write_text("exit\ncd /z\n", encoding="utf-8")
+    script.write_text("exit\nfoo\n", encoding="utf-8")
     shell.run_script(str(script))
-    assert "/z" not in recorder.text()
+    assert "foo" not in recorder.text("err")
 
 
 def test_missing_script(shell, recorder, tmp_path):

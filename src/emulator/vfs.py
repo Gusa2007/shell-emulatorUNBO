@@ -174,10 +174,10 @@ class VFS:
         node = self.root
         for part in split_path(normalize(path, cwd)):
             if not node.is_dir:
-                raise VFSError(f"{path}: Это не каталог")
+                raise VFSError("Это не каталог")
             node = node.children.get(part)
             if node is None:
-                raise VFSError(f"{path}: Нет такого файла или каталога")
+                raise VFSError("Нет такого файла или каталога")
         return node
 
     def motd(self):

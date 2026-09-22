@@ -1,5 +1,7 @@
 """Ядро эмулятора: разбор и выполнение команд без привязки к GUI."""
 
+import datetime
+
 from emulator import system
 from emulator.commands import REGISTRY, CommandError
 from emulator.parser import ParseError, parse
@@ -31,6 +33,9 @@ class Shell:
         self.host = system.get_hostname()
         self.vfs = VFS()
         self.cwd = "/"
+        self.oldpwd = None
+        self.history = []
+        self.started = datetime.datetime.now()
         self.running = True
         self.exit_code = 0
 
@@ -63,15 +68,19 @@ class Shell:
     def execute(self, line):
         """Выполнить одну строку ввода.
 
-        Возвращает ``True``, если команда выполнена без ошибок.
+        Строка с командой (не пустая и не только комментарий)
+        сохраняется в истории. Возвращает ``True``, если команда
+        выполнена без ошибок.
         """
         try:
             words = parse(line)
         except ParseError as exc:
+            self.history.append(line)
             self.error(f"{SHELL_NAME}: синтаксическая ошибка: {exc}")
             return False
         if not words:
             return True
+        self.history.append(line)
         return self._run(words[0], words[1:])
 
     def _run(self, name, args):
@@ -81,11 +90,11 @@ class Shell:
             self.error(f"{SHELL_NAME}: {name}: команда не найдена")
             return False
         try:
-            cmd.handler(self, args)
+            result = cmd.handler(self, args)
         except CommandError as exc:
             self.error(f"{name}: {exc}")
             return False
-        return True
+        return result is not False
 
     def start(self, config):
         """Выполнить действия при запуске согласно настройкам ``config``."""

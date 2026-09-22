@@ -1,0 +1,43 @@
+# Стартовый скрипт этапа 4: ls, cd, who, history.
+# Запускать с VFS deep: ./run.sh --vfs build/vfs/deep.zip --script ...
+
+# --- ls: все режимы ---
+ls                          # текущий каталог
+ls -a /home/user            # со скрытыми файлами, . и ..
+ls -l /etc                  # подробный вывод
+ls -la "/home/user/My Documents"
+ls motd /etc /tmp           # файл и несколько каталогов
+ls /home/user/docs/reports/2025
+
+# --- cd: все режимы ---
+cd /home/user               # абсолютный путь
+cd docs/reports             # относительный путь
+cd ../..                    # на два уровня вверх
+cd "My Documents"           # имя с пробелом
+cd -                        # в предыдущий каталог
+cd ~                        # в домашний каталог (/)
+cd usr/share/empty/deeper   # 4 уровня вложенности
+ls -a
+cd                          # без аргументов -- домашний каталог
+
+# --- who ---
+who
+who -H
+who -q
+who am i
+
+# --- history ---
+history 5
+history
+
+# --- обработка ошибок ---
+ls /nope                    # нет такого каталога
+ls -z                       # неверный ключ
+cd /etc/hosts               # не каталог
+cd /nope                    # нет такого каталога
+cd /a /b                    # слишком много аргументов
+who -x                      # неверный ключ
+who foo                     # лишний операнд
+history abc                 # нечисловой аргумент
+history -c                  # очистка истории
+history
