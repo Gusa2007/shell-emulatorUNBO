@@ -1,0 +1,9 @@
+[project]
+name = "shell-emulator"
+version = "0.1.0"
+description = "GUI-эмулятор командной оболочки UNIX-подобной ОС"
+requires-python = ">=3.8"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
