@@ -1,7 +1,7 @@
-"""Команды управления сеансом: exit, who, history."""
+"""Команды управления сеансом: exit, who, history, help."""
 
 from emulator.commands.registry import (
-    CommandError, command, parse_count, parse_flags)
+    REGISTRY, CommandError, command, parse_count, parse_flags)
 
 EXIT_SUCCESS = 0
 MAX_EXIT_ARGS = 1
@@ -15,6 +15,8 @@ NAME_WIDTH = 8
 LINE_WIDTH = 12
 TIME_WIDTH = 16
 NUMBER_WIDTH = 5
+USAGE_WIDTH = 30
+MAX_HELP_ARGS = 1
 
 
 @command("exit", "завершить работу эмулятора", "exit [код]")
@@ -71,3 +73,23 @@ def cmd_history(shell, args):
     for number, line in enumerate(shell.history, start=1):
         if number > start:
             shell.write(f"{number:>{NUMBER_WIDTH}}  {line}")
+
+
+@command("help", "показать список команд или справку по команде",
+         "help [команда]")
+def cmd_help(shell, args):
+    """Вывести список команд с описанием или справку по одной."""
+    if len(args) > MAX_HELP_ARGS:
+        raise CommandError("слишком много аргументов")
+    if args:
+        cmd = REGISTRY.get(args[0])
+        if cmd is None:
+            raise CommandError(f"нет справки по '{args[0]}'")
+        shell.write(f"{cmd.name}: {cmd.usage}")
+        shell.write(f"    {cmd.summary}.")
+        shell.write(f"    {cmd.handler.__doc__.strip()}")
+        return
+    shell.write("Встроенные команды:")
+    for name in sorted(REGISTRY):
+        cmd = REGISTRY[name]
+        shell.write(f"  {cmd.usage:<{USAGE_WIDTH}} {cmd.summary}")

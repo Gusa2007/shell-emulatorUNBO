@@ -1,7 +1,7 @@
-"""Команды работы с VFS: ls, cd."""
+"""Команды работы с VFS: ls, cd, rmdir."""
 
 from emulator.commands.registry import CommandError, command, parse_flags
-from emulator.vfs import CURRENT, PARENT, VFSError
+from emulator.vfs import CURRENT, PARENT, SEPARATOR, VFSError
 
 HOME = "/"
 PREVIOUS_DIR = "-"
@@ -121,3 +121,52 @@ def cmd_cd(shell, args):
         raise CommandError(f"{target}: Это не каталог")
     shell.oldpwd = shell.cwd
     shell.cwd = node.path
+
+
+def parent_operands(path):
+    """Вернуть путь и его родителей в записи пользователя (для -p)."""
+    result = [path]
+    while True:
+        head = path.rstrip(SEPARATOR).rpartition(SEPARATOR)[0]
+        if not head.strip(SEPARATOR):
+            return result
+        path = head
+        result.append(path)
+
+
+def is_busy(shell, node):
+    """Является ли каталог текущим или его предком."""
+    path = node.path.rstrip(SEPARATOR) + SEPARATOR
+    return (shell.cwd.rstrip(SEPARATOR) + SEPARATOR).startswith(path)
+
+
+def remove_dir(shell, path):
+    """Удалить один пустой каталог; при ошибке -- VFSError."""
+    node = shell.vfs.lookup(path, shell.cwd)
+    if not node.is_dir:
+        raise VFSError("Это не каталог")
+    if node.children:
+        raise VFSError("Каталог не пуст")
+    if is_busy(shell, node):
+        raise VFSError("Устройство или ресурс занято")
+    shell.vfs.remove(node)
+
+
+@command("rmdir", "удалить пустые каталоги (только в памяти)",
+         "rmdir [-p] каталог...")
+def cmd_rmdir(shell, args):
+    """Удалить пустые каталоги; -p -- также их пустых родителей."""
+    flags, paths = parse_flags(args, "p")
+    if not paths:
+        raise CommandError("пропущен операнд")
+    ok = True
+    for operand in paths:
+        targets = parent_operands(operand) if "p" in flags else [operand]
+        for path in targets:
+            try:
+                remove_dir(shell, path)
+            except VFSError as exc:
+                shell.error(f"rmdir: не удалось удалить '{path}': {exc}")
+                ok = False
+                break
+    return ok

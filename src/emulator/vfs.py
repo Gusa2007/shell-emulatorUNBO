@@ -180,6 +180,13 @@ class VFS:
                 raise VFSError("Нет такого файла или каталога")
         return node
 
+    def remove(self, node):
+        """Удалить узел из дерева (только в памяти)."""
+        if node.parent is None:
+            raise VFSError("Устройство или ресурс занято")
+        del node.parent.children[node.name]
+        node.parent = None
+
     def motd(self):
         """Вернуть текст файла motd из корня VFS или ``None``."""
         node = self.root.children.get(MOTD_NAME)

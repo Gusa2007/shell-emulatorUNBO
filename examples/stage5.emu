@@ -1,0 +1,34 @@
+# Стартовый скрипт этапа 5: rmdir и help.
+# Запускать с VFS deep: изменения делаются только в памяти,
+# архив build/vfs/deep.zip не меняется.
+
+# --- help ---
+help                        # список всех команд
+help rmdir                  # справка по одной команде
+
+# --- rmdir: все режимы ---
+ls /tmp /home/guest
+rmdir /tmp                  # абсолютный путь
+cd /home
+rmdir guest                 # относительный путь
+ls
+cd /
+ls -a /usr/share/empty
+rmdir -p usr/share/empty/deeper   # каталог и ставшие пустыми родители
+ls                          # каталога usr больше нет
+cd /home/user/docs/empty
+rmdir .                     # ошибка: текущий каталог занят
+rmdir ../empty              # ошибка: тот же каталог, другой путь
+cd /
+rmdir -p /home/user/docs/empty    # -p останавливается на непустом docs
+ls /home/user/docs
+
+# --- обработка ошибок ---
+rmdir                       # пропущен операнд
+rmdir -x /var               # неверный ключ
+rmdir /nope                 # нет такого каталога
+rmdir /etc/hosts            # не каталог
+rmdir /var                  # каталог не пуст
+help nope                   # нет справки
+help ls cd                  # слишком много аргументов
+history 3
